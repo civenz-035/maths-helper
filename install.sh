@@ -5,7 +5,7 @@
 # ============================================================
 set -e
 
-REPO_URL="https://github.com/joece035/maths-helper.git"
+REPO_URL="https://github.com/joece035/maths-helper"
 RAW_URL="https://raw.githubusercontent.com/joece035/maths-helper/main"
 INSTALL_DIR="$HOME/.maths-helper"
 BIN_DIR="$HOME/.local/bin"
