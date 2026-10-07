@@ -564,27 +564,77 @@ _maths_helper_ensure_python() {
 slv() {
     local -a clean_args=()
     local deg_mode="0"
-    for arg in "$@"; do
-        case "$arg" in
-            -d|--deg|--degree) deg_mode="1" ;;
-            *) clean_args+=("$arg") ;;
+    local raw_mode="0"
+    local scale="${MATH_DEFAULT_SCALE:-}"
+    local mode="${MATH_DEFAULT_MODE:-round}"
+
+    while [[ $# -gt 0 ]]; do
+        case "$1" in
+            -d|--deg|--degree) deg_mode="1"; shift ;;
+            -q|--quiet|-r|--raw|--val|--value|--output-number) raw_mode="1"; shift ;;
+            -s|--scale) scale="$2"; shift 2 ;;
+            -s[0-9]*) scale="${1#-s}"; shift ;;
+            --scale=*) scale="${1#*=}"; shift ;;
+            -m|--mode) mode="$2"; shift 2 ;;
+            --mode=*) mode="${1#*=}"; shift ;;
+            --up|--roundup|--ceil) mode="up"; shift ;;
+            --down|--rounddown|--floor|--trunc) mode="down"; shift ;;
+            --round) mode="round"; shift ;;
+            *) clean_args+=("$1"); shift ;;
         esac
     done
+
+    # ── Normalize mode helper ──
+    _slv_norm_mode() {
+        case "$1" in
+            u|up|roundup|ceil)            echo "up" ;;
+            d|down|rounddown|floor|trunc) echo "down" ;;
+            r|round)                      echo "round" ;;
+            *)                            echo "$1" ;;
+        esac
+    }
+
+    # ── Lead-arg parsing: optional [scale] [mode] at the front ──
+    if [[ ${#clean_args[@]} -ge 2 ]] && [[ "${clean_args[0]}" =~ ^[0-9]+$ ]]; then
+        scale="${clean_args[0]}"
+        clean_args=("${clean_args[@]:1}")
+        if [[ ${#clean_args[@]} -ge 2 ]] && [[ "${clean_args[0]}" =~ ^(u|up|roundup|ceil|d|down|rounddown|floor|trunc|r|round)$ ]]; then
+            mode="$(_slv_norm_mode "${clean_args[0]}")"
+            clean_args=("${clean_args[@]:1}")
+        fi
+    fi
+
+    # ── Tail-arg parsing: optional [scale] [mode] at the end ──
+    local n=${#clean_args[@]}
+    if (( n >= 3 )) && [[ "${clean_args[n-1]}" =~ ^(u|up|roundup|ceil|d|down|rounddown|floor|trunc|r|round)$ ]] && [[ "${clean_args[n-2]}" =~ ^[0-9]+$ ]]; then
+        mode="$(_slv_norm_mode "${clean_args[n-1]}")"
+        scale="${clean_args[n-2]}"
+        clean_args=("${clean_args[@]:0:n-2}")
+    elif (( n >= 2 )) && [[ "${clean_args[n-1]}" =~ ^[0-9]+$ ]] && [[ "${clean_args[n-1]}" != *"="* ]]; then
+        scale="${clean_args[n-1]}"
+        clean_args=("${clean_args[@]:0:n-1}")
+    fi
 
     [[ ${#clean_args[@]} -eq 0 ]] && {
         cat <<'EOF' >&2
 slv — Algebraic Equation Solver (alias: solve)
-Usage: slv [--deg|-d] <equation> [var=value] ...
+Usage: slv [--deg|-d] [-q|--raw] [-s <scale>] [-m <mode>] <equation> [var=value] ... [scale] [mode]
 
 Options:
-  -d, --deg, --degree   Use degrees for trigonometric functions (default: radians)
+  -d, --deg, --degree                      Use degrees for trigonometric functions (default: radians)
+  -q, -r, --raw, --val, --output-number    Output raw numeric value only (script-friendly, no ANSI)
+  -s, --scale <digits>                     Number of decimal places (e.g. -s 4 or 20)
+  -m, --mode <r|u|d>                       Rounding mode: r/round (default), u/up, d/down
 
 Examples:
-  slv "x=2x+y" "y=2"                # x=-2  y=2
-  slv --deg "h=a*sin(b)" a=10 b=30  # h=5   (sin(30°) = 0.5)
-  slv "2x=2y"                       # x=y   (symbolic)
-  slv "a^2+b^2=c^2" "a=3" "b=4"     # c=5
-  slv "F=m*a" "m=10" "a=9.8"        # F=98
+  slv "x=2x+y" "y=2"                              # x=-2  y=2
+  slv -q "x=2x+y" "y=2"                           # -2
+  slv "basebet/bal=(m-1)/(m^n-1)" bal=100 m=2 n=5 4      # basebet = 3.2258
+  slv -q "basebet/bal=(m-1)/(m^n-1)" bal=100 m=2 n=5 20 d # 3.22580645161290322580
+  slv --raw "F=m*a" "m=10" "a=9.8"                # 98
+  slv --deg "h=a*sin(b)" a=10 b=30                # h=5   (sin(30°) = 0.5)
+  slv "2x=2y"                                     # x=y   (symbolic)
+  slv "a^2+b^2=c^2" "a=3" "b=4"                   # c=5
 EOF
         return 1
     }
@@ -595,22 +645,26 @@ EOF
     local eq="${clean_args[0]}"
     local -a knowns=("${clean_args[@]:1}")
 
-    "$PYTHON_CMD" - "$deg_mode" "$eq" "${knowns[@]}" <<'PYEOF'
+    "$PYTHON_CMD" - "$deg_mode" "$raw_mode" "$scale" "$mode" "$eq" "${knowns[@]}" <<'PYEOF'
 import sys, re
+from decimal import Decimal, ROUND_HALF_UP, ROUND_UP, ROUND_DOWN
 from sympy import (symbols, Eq, solve, simplify, sympify,
                    sqrt, Rational, pi, E as euler, zoo, oo, nan,
                    sin, cos, tan, asin, acos, atan, sinh, cosh, tanh,
                    exp, log, Abs, factorial, floor, ceiling, I, rad, deg)
 from sympy.parsing.sympy_parser import (parse_expr,
-    standard_transformations, implicit_multiplication_application,
-    convert_xor)
+                   standard_transformations, implicit_multiplication_application,
+                   convert_xor)
 
 transformations = (standard_transformations +
                    (implicit_multiplication_application, convert_xor))
 
-deg_mode = (sys.argv[1] == "1")
-eq_str   = sys.argv[2]
-knowns   = sys.argv[3:]
+deg_mode  = (sys.argv[1] == "1")
+raw_mode  = (sys.argv[2] == "1")
+scale_str = sys.argv[3]
+mode_str  = sys.argv[4]
+eq_str    = sys.argv[5]
+knowns    = sys.argv[6:]
 
 MATH_FUNCS = {
     "sqrt": sqrt, "pi": pi, "e": euler, "E": euler,
@@ -689,6 +743,8 @@ equation = Eq(lhs, rhs)
 equation_subst = equation.subs(subs)
 
 if equation_subst.has(zoo) or lhs.subs(subs).has(zoo) or rhs.subs(subs).has(zoo):
+    if raw_mode:
+        sys.exit(1)
     print("\n  \033[1;31mUndefined\033[0m (division by zero / singularity)\n")
     sys.exit(0)
 
@@ -696,6 +752,9 @@ unknowns = [sym_map[v] for v in raw_vars if sym_map[v] not in subs]
 
 if not unknowns:
     val = simplify(lhs.subs(subs) - rhs.subs(subs))
+    if raw_mode:
+        print("1" if val == 0 else "0")
+        sys.exit(0)
     if val == 0:
         print("\n  \033[1;32m✓ Equation is satisfied (both sides equal).\033[0m\n")
     else:
@@ -708,25 +767,32 @@ except Exception as exc:
     print(f"slv: solver error — {exc}", file=sys.stderr)
     sys.exit(1)
 
-ANSI_G  = "\033[1;32m"
-ANSI_C  = "\033[1;36m"
-ANSI_Y  = "\033[1;33m"
-ANSI_R  = "\033[0m"
-
-def fmt_val(v):
+def fmt_val(v, use_scale=True):
     try:
         if v.is_number and v.is_real:
-            f = float(v)
-            if f == int(f) and abs(f) < 1e15:
-                return str(int(f))
-            if abs(f) > 1e10 or (f != 0 and abs(f) < 1e-4):
+            if use_scale and scale_str != "":
+                prec = int(scale_str)
+                eval_prec = max(60, prec + 30)
+                val_num = v.evalf(eval_prec)
+                d = Decimal(str(val_num))
+                if mode_str in ("up", "ceil", "u"):
+                    rounding = ROUND_UP
+                elif mode_str in ("down", "floor", "d", "trunc"):
+                    rounding = ROUND_DOWN
+                else:
+                    rounding = ROUND_HALF_UP
+                quant = Decimal("1e-" + str(prec)) if prec > 0 else Decimal("1")
+                return format(d.quantize(quant, rounding=rounding), 'f')
+            else:
+                f = float(v)
+                if f == int(f) and abs(f) < 1e15:
+                    return str(int(f))
+                if abs(f) > 1e10 or (f != 0 and abs(f) < 1e-4):
+                    return f"{f:.6g}"
                 return f"{f:.6g}"
-            return f"{f:.6g}"
     except (TypeError, ValueError, AttributeError):
         pass
     return str(simplify(v))
-
-print()
 
 def _prefer_positive(solutions, unknowns, subs):
     if len(solutions) <= 1:
@@ -740,6 +806,34 @@ def _prefer_positive(solutions, unknowns, subs):
             pass
     return solutions[0]
 
+if raw_mode:
+    if sol:
+        solution = _prefer_positive(sol, unknowns, subs)
+        for sym in unknowns:
+            val = solution.get(sym, sym)
+            val_sub = val.subs(subs)
+            if val_sub == sym and len(unknowns) > 1 and len(solution) < len(unknowns):
+                continue
+            print(fmt_val(val_sub, use_scale=True))
+    else:
+        expr = simplify(lhs - rhs)
+        for unk in unknowns:
+            try:
+                sym_sol = solve(expr.subs(subs), unk)
+                if sym_sol:
+                    print(fmt_val(sym_sol[0], use_scale=True))
+                    break
+            except Exception:
+                pass
+    sys.exit(0)
+
+ANSI_G  = "\033[1;32m"
+ANSI_C  = "\033[1;36m"
+ANSI_Y  = "\033[1;33m"
+ANSI_R  = "\033[0m"
+
+print()
+
 def _symbolic_solve(lhs, rhs, unknowns, subs):
     expr = simplify(lhs - rhs)
     printed_any = False
@@ -748,7 +842,7 @@ def _symbolic_solve(lhs, rhs, unknowns, subs):
             sym_sol = solve(expr.subs(subs), unk)
             if sym_sol:
                 chosen = sym_sol[0]
-                chosen_str = fmt_val(chosen)
+                chosen_str = fmt_val(chosen, use_scale=True)
                 if str(chosen) != str(unk):
                     note = f"  {ANSI_Y}(imaginary / no real solution){ANSI_R}" if chosen.has(I) else ""
                     print(f"  {ANSI_G}{unk}{ANSI_R} = {ANSI_C}{chosen_str}{ANSI_R}{note}")
@@ -768,17 +862,17 @@ if sol:
         if val_sub == sym and len(unknowns) > 1 and len(solution) < len(unknowns):
             continue
         s_name = str(sym)
-        s_val  = fmt_val(val_sub)
+        s_val  = fmt_val(val_sub, use_scale=True)
         note   = f"  {ANSI_Y}(imaginary / no real solution){ANSI_R}" if val_sub.has(I) else ""
         print(f"  {ANSI_G}{s_name}{ANSI_R} = {ANSI_C}{s_val}{ANSI_R}{note}")
     for sym, val in subs.items():
         s_name = str(sym)
-        s_val  = fmt_val(val)
+        s_val  = fmt_val(val, use_scale=False)
         print(f"  {ANSI_G}{s_name}{ANSI_R} = {ANSI_C}{s_val}{ANSI_R}")
 else:
     _symbolic_solve(lhs, rhs, unknowns, subs)
     for sym, val in subs.items():
-        print(f"  {ANSI_G}{sym}{ANSI_R} = {ANSI_C}{fmt_val(val)}{ANSI_R}")
+        print(f"  {ANSI_G}{sym}{ANSI_R} = {ANSI_C}{fmt_val(val, use_scale=False)}{ANSI_R}")
 print()
 PYEOF
 }
