@@ -1,6 +1,6 @@
 # ============================================================
 # maths.ps1 — PowerShell Module for maths-helper (Windows Native)
-# Repository: https://github.com/joece035/maths-helper
+# Repository: https://github.com/civenz-035/maths-helper
 # ============================================================
 
 $script:MATHS_DIR = Split-Path -Parent $MyInvocation.MyCommand.Path

@@ -1,12 +1,12 @@
 #!/usr/bin/env bash
 # ============================================================
 # maths-helper 1-Line Installer for Bash / Zsh
-# Repository: https://github.com/joece035/maths-helper
+# Repository: https://github.com/civenz-035/maths-helper
 # ============================================================
 set -e
 
-REPO_URL="https://github.com/joece035/maths-helper.git"
-RAW_URL="https://raw.githubusercontent.com/joece035/maths-helper/main"
+REPO_URL="https://github.com/civenz-035/maths-helper.git"
+RAW_URL="https://raw.githubusercontent.com/civenz-035/maths-helper/main"
 INSTALL_DIR="$HOME/.maths-helper"
 BIN_DIR="$HOME/.local/bin"
 

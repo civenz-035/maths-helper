@@ -14,13 +14,13 @@
 #### 🪟 สำหรับผู้ใช้ Windows (PowerShell)
 เปิด **PowerShell** หรือ **Windows Terminal** แล้ววางคำสั่งนี้:
 ```powershell
-irm https://raw.githubusercontent.com/joece035/maths-helper/main/install.ps1 | iex
+irm https://raw.githubusercontent.com/civenz-035/maths-helper/main/install.ps1 | iex
 ```
 
 #### 🐧 🍎 สำหรับ Linux / macOS / WSL / Git Bash / Termux (Bash/Zsh)
 เปิด **Terminal** แล้ววางคำสั่งนี้:
 ```bash
-curl -fsSL https://raw.githubusercontent.com/joece035/maths-helper/main/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/civenz-035/maths-helper/main/install.sh | bash
 ```
 
 > **คำแนะนำ:** เมื่อติดตั้งเสร็จ จะต้องปิดแล้วเปิด terminal session ใหม่ จึงจะสามารถพิมพ์ `mth` หรือ `slv` ในหน้าต่าง Terminal ถัดไปได้ทันที!
@@ -60,15 +60,26 @@ slv "2x + 10 = 30"
 slv "x = 2x + y" "y = 2"
 # ผลลัพธ์: x = -2,  y = 2
 
-# 3. ตรีโกณมิติแบบองศา(--deg หรือ -d) ถ้าไม่เติม --deg,-d จะ defaultเ มุมเป็นหน่วย radian
+# 3. กำหนดทศนิยมและโหมดปัดเศษ (เหมือน mth)
+slv "x = 10/3" 4
+# ผลลัพธ์: x = 3.3333
+
+slv "x = 10/3" 20 d
+# ผลลัพธ์: x = 3.33333333333333333333
+
+# 4. โหมด Script-Friendly (-q หรือ --raw) สำหรับใช้ใน Bash Scripts
+current_bet=$(slv -q "basebet/bal=(m-1)/(m^n-1)" bal=100 m=2 n=5 8 d)
+# ได้ค่าตัวเลขเพียวๆ ไม่มีสี ANSI: 3.22580645
+
+# 5. ตรีโกณมิติแบบองศา (--deg หรือ -d) ถ้าไม่เติม --deg,-d จะ default มุมเป็นหน่วย radian
 slv --deg "h = a * sin(b)" "a = 10" "b = 30"
 # ผลลัพธ์: h = 5,  a = 10,  b = 30   (sin 30° = 0.5)
 
-# 4. ตัวอย่างงานวิศวกรรม: หาแรงปฏิกิริยาคาน (Reaction)
+# 6. ตัวอย่างงานวิศวกรรม: หาแรงปฏิกิริยาคาน (Reaction)
 slv "Ra + Rb = 100" "Ra = 40"
 # ผลลัพธ์: Rb = 60,  Ra = 40
 
-# 5. ปิทาโกรัสหาด้านตรงข้ามมุมฉาก c
+# 7. ปิทาโกรัสหาด้านตรงข้ามมุมฉาก c
 slv "a^2 + b^2 = c^2" "a = 3" "b = 4"
 # ผลลัพธ์: c = 5,  a = 3,  b = 4
 ```
@@ -82,13 +93,13 @@ slv "a^2 + b^2 = c^2" "a = 3" "b = 4"
 #### 🪟 Windows (PowerShell)
 Open **PowerShell** or **Windows Terminal** and run:
 ```powershell
-irm https://raw.githubusercontent.com/joece035/maths-helper/main/install.ps1 | iex
+irm https://raw.githubusercontent.com/civenz-035/maths-helper/main/install.ps1 | iex
 ```
 
 #### 🐧 🍎 Linux / macOS / WSL / Git Bash / Termux (Bash/Zsh)
 Open **Terminal** and run:
 ```bash
-curl -fsSL https://raw.githubusercontent.com/joece035/maths-helper/main/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/civenz-035/maths-helper/main/install.sh | bash
 ```
 
 > **Note:** Once installed, the `mth` and `slv` commands will be available in any new terminal session!
@@ -128,15 +139,26 @@ slv "2x + 10 = 30"
 slv "x = 2x + y" "y = 2"
 # Output: x = -2,  y = 2
 
-# 3. Trigonometry in degrees (--deg or -d) , default radain ( run without --deg,-d )
+# 3. Decimal precision and rounding mode (same as mth)
+slv "x = 10/3" 4
+# Output: x = 3.3333
+
+slv "x = 10/3" 20 d
+# Output: x = 3.33333333333333333333
+
+# 4. Script-Friendly mode (-q or --raw) for Bash Scripts
+ans=$(slv -q "x = 10/3" 4)
+# Clean numeric output with no ANSI color codes: 3.3333
+
+# 5. Trigonometry in degrees (--deg or -d), default radians
 slv --deg "h = a * sin(b)" "a = 10" "b = 30"
 # Output: h = 5,  a = 10,  b = 30   (sin 30° = 0.5)
 
-# 4. Beam reaction example (Civil engineering)
+# 6. Beam reaction example (Civil engineering)
 slv "Ra + Rb = 100" "Ra = 40"
 # Output: Rb = 60,  Ra = 40
 
-# 5. Pythagorean theorem (finds positive root automatically)
+# 7. Pythagorean theorem (finds positive root automatically)
 slv "a^2 + b^2 = c^2" "a = 3" "b = 4"
 # Output: c = 5,  a = 3,  b = 4
 ```
@@ -170,4 +192,4 @@ slv "a^2 + b^2 = c^2" "a = 3" "b = 4"
 ---
 
 ## 📄 License
-MIT License © 2026 joece035
+MIT License © 2026 civenz-035

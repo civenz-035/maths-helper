@@ -1,11 +1,11 @@
 # ============================================================
 # maths-helper 1-Line Installer for Windows PowerShell
-# Repository: https://github.com/joece035/maths-helper
+# Repository: https://github.com/civenz-035/maths-helper
 # ============================================================
 
 $ErrorActionPreference = "Continue"
 
-$RAW_URL = "https://raw.githubusercontent.com/joece035/maths-helper/main"
+$RAW_URL = "https://raw.githubusercontent.com/civenz-035/maths-helper/main"
 $INSTALL_DIR = Join-Path $HOME ".maths-helper"
 
 Write-Host "====================================================" -ForegroundColor Cyan

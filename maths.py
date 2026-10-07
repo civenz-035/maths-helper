@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 maths.py — Cross-platform backend for mth & slv
-Repository: https://github.com/joece035/maths-helper
+Repository: https://github.com/civenz-035/maths-helper
 """
 import sys
 import re
