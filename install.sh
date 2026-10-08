@@ -80,8 +80,10 @@ if [[ ":$PATH:" != *":$HOME/.local/bin:"* ]]; then
     done
 fi
 
-# Source for current session if possible
+# Apply to current session immediately (no restart needed for basic use)
+export PATH="$BIN_DIR:$PATH"
 if [ -f "$INSTALL_DIR/maths.sh" ]; then
+    # shellcheck disable=SC1090
     source "$INSTALL_DIR/maths.sh"
 fi
 
@@ -93,5 +95,26 @@ echo -e "  mth sqrt(5^2+12^2)  → $($INSTALL_DIR/bin/mth "sqrt(5^2+12^2)")"
 echo -e "\n${CYAN}Commands available:${NC}"
 echo -e "  ${GREEN}mth${NC}   (or ${GREEN}calc${NC}, ${GREEN}math${NC})  : Excel-style calculation"
 echo -e "  ${GREEN}slv${NC}   (or ${GREEN}solve${NC})         : Algebraic equation solver"
-echo -e "\n💡 If commands are not recognized yet, restart your terminal or run:"
-echo -e "   ${CYAN}source ~/.bashrc${NC}  (or source ~/.zshrc)\n"
+
+# Optional fresh-shell prompt (Non-IT friendly, opt-in only).
+# NOTE: stdin is a pipe when installed via `curl ... | bash`,
+# so we must read the answer from /dev/tty, not stdin.
+if [ -e /dev/tty ]; then
+    printf "\n💡 ต้องการเปิด shell ใหม่ตอนนี้เลยไหม? (แนะนำ Y) [y/N]: "
+    _mh_answer=""
+    IFS= read -r _mh_answer < /dev/tty || true
+    case "$_mh_answer" in
+        [Yy]*)
+            _mh_shell="${SHELL:-bash}"
+            echo -e "${CYAN}↻ กำลังเปิด shell ใหม่ (${_mh_shell})...${NC}"
+            exec "$_mh_shell" -l
+            ;;
+        *)
+            echo -e "\n💡 พร้อมใช้ใน session นี้แล้ว ถ้าเปิด terminal ใหม่ก็ยังใช้ได้ (โหลดอัตโนมัติจาก ~/.bashrc)"
+            echo -e "   ${CYAN}source ~/.bashrc${NC}  (หรือ source ~/.zshrc)\n"
+            ;;
+    esac
+else
+    echo -e "\n💡 If commands are not recognized yet, restart your terminal or run:"
+    echo -e "   ${CYAN}source ~/.bashrc${NC}  (or source ~/.zshrc)\n"
+fi
