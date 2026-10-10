@@ -1,3 +1,10 @@
 #!/usr/bin/env bash
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+# Resolve real path even when executed via symlink
+_self="${BASH_SOURCE[0]}"
+if command -v readlink >/dev/null 2>&1; then
+    _real="$(readlink -f "$_self" 2>/dev/null || readlink "$_self" 2>/dev/null || echo "$_self")"
+else
+    _real="$_self"
+fi
+SCRIPT_DIR="$(cd "$(dirname "$_real")/.." && pwd)"
 "$SCRIPT_DIR/maths.sh" mth "$@"

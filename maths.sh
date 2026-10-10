@@ -218,7 +218,8 @@ EOF
     local _smart_hint=""
     # Extract first trig call argument for heuristic check
     local _trig_match
-    _trig_match="$(echo "$_hint_expr" | grep -oP '(?<=\b(?:sin|cos|tan)\()[^)]+' | head -1 2>/dev/null || true)"
+    # POSIX-compatible extraction (no grep -P; works on BusyBox/ACodex)
+    _trig_match="$(echo "$_hint_expr" | sed -n 's/.*\b\(sin\|cos\|tan\)(\([^)]*\)).*/\2/p' | head -1 2>/dev/null || true)"
     if [[ -n "$_trig_match" ]]; then
         # Evaluate the argument numerically to check if > 2*pi
         local _ang
