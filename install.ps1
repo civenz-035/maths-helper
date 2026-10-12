@@ -3,7 +3,21 @@
 # Repository: https://github.com/civenz-035/maths-helper
 # ============================================================
 
+param(
+    [switch]$Help,
+    [switch]$h
+)
+
 $ErrorActionPreference = "Continue"
+
+if ($Help -or $h -or ($args -contains "-h") -or ($args -contains "--help") -or ($args -contains "-?")) {
+    Write-Host "maths-helper 1-Line Installer for Windows PowerShell" -ForegroundColor Cyan
+    Write-Host "Usage: .\install.ps1 [-h | --help]"
+    Write-Host ""
+    Write-Host "Options:"
+    Write-Host "  -h, --help    Show this help message and exit"
+    return
+}
 
 $RAW_URL = "https://raw.githubusercontent.com/civenz-035/maths-helper/main"
 $INSTALL_DIR = Join-Path $HOME ".maths-helper"

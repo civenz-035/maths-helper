@@ -8,8 +8,7 @@ import re
 import math
 
 def run_mth(args):
-    if not args:
-        print("""mth — Excel-style Maths Helper (alias: calc, math)
+    help_text = """mth — Excel-style Maths Helper (alias: calc, math)
 Usage: mth <expression> [decimals] [mode]
        mode: r|round (default) | u|up | d|down
 Examples:
@@ -18,7 +17,14 @@ Examples:
   mth SUM(10,20,30)        # 60
   mth POW(2,10)            # 1024
   mth if(100>50,"y","n")   # y
-""", file=sys.stderr)
+  mth sind(30)             # 0.50 (degrees)
+"""
+    if any(a in ("-h", "--help") for a in args):
+        print(help_text.strip())
+        return 0
+
+    if not args:
+        print(help_text, file=sys.stderr)
         return 1
 
     scale = 2
@@ -158,6 +164,17 @@ Examples:
 
 
 def run_slv(args):
+    help_text = """slv — Algebraic Equation Solver (alias: solve)
+Usage: slv [--deg|-d] <equation> [var=value] ...
+Examples:
+  slv "x=2x+y" "y=2"                # x=-2  y=2
+  slv --deg "h=a*sin(b)" a=10 b=30  # h=5
+  slv "a^2+b^2=c^2" "a=3" "b=4"     # c=5
+"""
+    if any(a in ("-h", "--help") for a in args):
+        print(help_text.strip())
+        return 0
+
     clean_args = []
     deg_mode = False
     for arg in args:
@@ -167,13 +184,7 @@ def run_slv(args):
             clean_args.append(arg)
 
     if not clean_args:
-        print("""slv — Algebraic Equation Solver (alias: solve)
-Usage: slv [--deg|-d] <equation> [var=value] ...
-Examples:
-  slv "x=2x+y" "y=2"                # x=-2  y=2
-  slv --deg "h=a*sin(b)" a=10 b=30  # h=5
-  slv "a^2+b^2=c^2" "a=3" "b=4"     # c=5
-""", file=sys.stderr)
+        print(help_text, file=sys.stderr)
         return 1
 
     try:
@@ -366,9 +377,20 @@ Examples:
 
 
 if __name__ == "__main__":
-    if len(sys.argv) < 2:
-        print("Usage: maths.py [mth|slv] <args...>")
-        sys.exit(1)
+    if len(sys.argv) < 2 or sys.argv[1].lower() in ["-h", "--help"]:
+        print("""maths.py — Cross-platform backend for mth & slv
+Repository: https://github.com/civenz-035/maths-helper
+
+Usage: maths.py <mth|slv> [args...]
+       maths.py -h | --help
+
+Commands:
+  mth, calc, math     Excel-style Maths Helper
+  slv, solve          Algebraic Equation Solver
+
+Run 'maths.py <command> -h' or '--help' for detailed help on each command.""")
+        sys.exit(0 if len(sys.argv) >= 2 and sys.argv[1].lower() in ["-h", "--help"] else 1)
+
     sub = sys.argv[1].lower()
     rest = sys.argv[2:]
     if sub in ["mth", "calc", "math"]:
@@ -377,4 +399,5 @@ if __name__ == "__main__":
         sys.exit(run_slv(rest))
     else:
         print(f"Unknown command: {sub}")
+        print("Run 'maths.py --help' for usage instructions.")
         sys.exit(1)

@@ -5,6 +5,15 @@
 # ============================================================
 set -e
 
+if [[ "${1:-}" == "-h" || "${1:-}" == "--help" ]]; then
+    echo "maths-helper Installer -- Bash / Zsh / ACodex compatible"
+    echo "Usage: ./install.sh [options]"
+    echo ""
+    echo "Options:"
+    echo "  -h, --help    Show this help message and exit"
+    exit 0
+fi
+
 REPO_URL="https://github.com/civenz-035/maths-helper.git"
 RAW_URL="https://raw.githubusercontent.com/civenz-035/maths-helper/main"
 INSTALL_DIR="$HOME/.maths-helper"
