@@ -203,7 +203,9 @@ else
     if [ -e /dev/tty ]; then
         printf "\nWant to open a new shell now? (recommended Y) [y/N]: "
         _mh_answer=""
-        IFS= read -r _mh_answer < /dev/tty || true
+        # NOTE: 2>/dev/null silences "no such device" in environments
+        # without a TTY (automation, pipes). Interactive shells unaffected.
+        IFS= read -r _mh_answer < /dev/tty 2>/dev/null || true
         case "$_mh_answer" in
             [Yy]*)
                 _mh_shell="${SHELL:-bash}"

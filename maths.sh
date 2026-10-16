@@ -537,6 +537,9 @@ EOF
     printf '%s\n' "$awk_out"
     # Print smart hint AFTER the result (non-blocking, to stderr so it doesn't pollute pipes)
     [[ -n "$_smart_hint" ]] && printf "${_smart_hint}\n" >&2
+    # NOTE: the [[ ... ]] && ... above returns 1 when there is no hint;
+    # force success so pipes/$(...) and install.sh Quick Test see rc=0.
+    return 0
 }
 
 # Friendly aliases

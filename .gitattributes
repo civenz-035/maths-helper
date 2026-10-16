@@ -1,0 +1,4 @@
+# Keep shell/python sources LF everywhere (Syncthing/Windows inject CRLF → bash/zsh break).
+# PowerShell files stay CRLF for native Windows editors.
+* text=auto eol=lf
+*.ps1 text eol=crlf
